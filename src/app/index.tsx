@@ -1,4 +1,4 @@
-import { db, initDatabase, insertSampleTransaction } from '@/db/database';
+import { getTransactions } from '@/db/database'; // Changed import
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
@@ -6,13 +6,13 @@ export default function DashboardScreen() {
   const [transactions, setTransactions] = useState<any[]>([]);
 
   useEffect(() => {
-    initDatabase(); 
-    const existing = db.getAllSync('SELECT * FROM transactions');
-    if (existing.length === 0) {
-      insertSampleTransaction();
-    }
-    const data = db.getAllSync('SELECT * FROM transactions ORDER BY date DESC');
-    setTransactions(data);
+    const loadData = async () => {
+      const data = await getTransactions();
+      // Sort newest first
+      data.sort((a: any, b: any) => Number(b.id) - Number(a.id));
+      setTransactions(data);
+    };
+    loadData();
   }, []);
 
   return (
@@ -25,23 +25,25 @@ export default function DashboardScreen() {
           <Text style={styles.expense}>Expense: $15.50</Text>
         </View>
       </View>
-      <Text style={styles.subtitle}>Recent Transactions (Database):</Text>
+      <Text style={styles.subtitle}>Recent Transactions:</Text>
       <FlatList
         data={transactions}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.transactionItem}>
             <Text>{item.category} - {item.note}</Text>
             <Text style={{ color: item.type === 'expense' ? 'red' : 'green', fontWeight: 'bold' }}>
-              {item.type === 'expense' ? '-' : '+'}${item.amount}
+              {item.type === 'expense' ? '-' : '+'}${parseFloat(item.amount).toFixed(2)}
             </Text>
           </View>
         )}
+        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>No transactions yet.</Text>}
       />
     </View>
   );
 }
 
+// Keep your existing styles...
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, paddingTop: 60, backgroundColor: '#f5f5f5' },
   title: { fontSize: 28, fontWeight: 'bold', marginBottom: 20 },

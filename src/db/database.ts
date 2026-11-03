@@ -1,31 +1,41 @@
-import * as SQLite from 'expo-sqlite';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const db = SQLite.openDatabaseSync('spendwise.db');
+const STORAGE_KEY = '@spendwise_transactions';
 
-export const initDatabase = () => {
-  db.execSync(`
-    PRAGMA journal_mode = WAL;
-    CREATE TABLE IF NOT EXISTS transactions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      type TEXT NOT NULL,
-      amount REAL NOT NULL,
-      category TEXT NOT NULL,
-      note TEXT,
-      date TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS budgets (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      category TEXT NOT NULL,
-      month TEXT NOT NULL,
-      amount REAL NOT NULL
-    );
-  `);
+export const getTransactions = async () => {
+  try {
+    const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+    return jsonValue != null ? JSON.parse(jsonValue) : [];
+  } catch (e) {
+    console.error('Failed to fetch transactions.', e);
+    return [];
+  }
 };
 
-export const insertSampleTransaction = () => {
-  const today = new Date().toISOString().split('T')[0];
-  db.runSync(
-    'INSERT INTO transactions (type, amount, category, note, date) VALUES (?, ?, ?, ?, ?)',
-    ['expense', 15.50, 'Food', 'Lunch', today]
-  );
+export const saveTransaction = async (transaction: any) => {
+  try {
+    const existing = await getTransactions();
+    let updated;
+    if (transaction.id) {
+      // Update
+      updated = existing.map((t: any) => (t.id === transaction.id ? transaction : t));
+    } else {
+      // Add new
+      const newTransaction = { ...transaction, id: Date.now().toString() };
+      updated = [...existing, newTransaction];
+    }
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to save transaction.', e);
+  }
+};
+
+export const deleteTransaction = async (id: string) => {
+  try {
+    const existing = await getTransactions();
+    const updated = existing.filter((t: any) => t.id !== id);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to delete transaction.', e);
+  }
 };
