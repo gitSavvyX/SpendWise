@@ -21,6 +21,18 @@ This project was developed over a 5-day sprint as part of the **Stack & Scale We
 - **UI/UX:** Expo Linear Gradient, Expo Vector Icons (Ionicons)
 
 ## 🚀 How to Run the Project Locally
+
 1. Clone the repository:
-   ```bash
    git clone https://github.com/gitSavvyX/SpendWise.git
+
+2. Navigate into the folder and install dependencies:
+   cd SpendWise
+   npm install
+
+3. Start the Expo development server:
+   npx expo start
+
+4. Open the app:
+   - Press `w` to open the web version in your browser.
+   - Or scan the QR code with the **Expo Go** app on your Android/iOS device.
+
